@@ -17,8 +17,12 @@ import { motion } from 'framer-motion'
 
 export default function TableGC() {
   const [data, setData] = useState<iPersonagem[]>(() => {
+    // Verificar se já existem dados no localStorage
     const storedData = localStorage.getItem('characters')
-    return storedData ? JSON.parse(storedData) : characters
+    if (storedData) {
+      return JSON.parse(storedData)
+    }
+    return characters
   })
 
   const contarIdasConcluidas = (personagem: iPersonagem) => {
@@ -32,7 +36,7 @@ export default function TableGC() {
       const idasA = contarIdasConcluidas(a)
       const idasB = contarIdasConcluidas(b)
 
-      return idasB - idasA
+      return idasB - idasA // Ordena do maior para o menor (quem fez mais missões sobe)
     })
   }
 
@@ -41,33 +45,35 @@ export default function TableGC() {
     missaoId: number,
     index: number,
   ) => {
-    setData((dadosAntigos) => {
-      const novaLista = dadosAntigos.map((personagem) => {
+    setData((prevData) => {
+      const novaLista = prevData.map((personagem) => {
         if (personagem.id === personagemId) {
-          const novasMissoes = personagem.missoes.map((missao) => {
-            if (missao.id === missaoId) {
-              const novasIdas = [...missao.idas]
-              novasIdas[index] = !novasIdas[index]
-              return { ...missao, idas: novasIdas }
+          const updatedMissoes = personagem.missoes.map((missoes) => {
+            if (missoes.id === missaoId) {
+              const updatedIdas = [...missoes.idas]
+              updatedIdas[index] = !updatedIdas[index] // Alternando entre true e false
+              return { ...missoes, idas: updatedIdas }
             }
-            return missao
+            return missoes
           })
-          return { ...personagem, missoes: novasMissoes }
+          return { ...personagem, missoes: updatedMissoes }
         }
         return personagem
       })
 
+      // 🔥 Agora a gente ordena antes de atualizar o estado!
       return ordenarPorMissoesFeitas(novaLista)
     })
   }
 
   const resetMissoes = () => {
+    // Lógica para limpar ou resetar os dados
     setData(
       data.map((item) => ({
         ...item,
         missoes: item.missoes.map((missao) => ({
           ...missao,
-          idas: missao.idas.map(() => false),
+          idas: missao.idas.map(() => false), // Resetando todas as missões para não concluídas
         })),
       })),
     )
